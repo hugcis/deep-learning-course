@@ -15,6 +15,19 @@ def generate_a_drawing(figsize, U, V, noise=0.0):
     plt.close(fig)
     return imdata
 
+def generate_a_drawing_pair(figsize, U, V, noise=0.0):
+    fig = plt.figure(figsize=(figsize,figsize))
+    ax = plt.subplot(111)
+    plt.axis('Off')
+    ax.set_xlim(0,figsize)
+    ax.set_ylim(0,figsize)
+    ax.fill(U, V, "k")
+    fig.canvas.draw()
+    imdata = np.frombuffer(fig.canvas.tostring_rgb(), dtype=np.uint8)[::3].astype(np.float32)
+    imdata_noise = imdata + noise * np.random.random(imdata.size)
+    plt.close(fig)
+    return imdata, imdata_noise
+
 def generate_a_rectangle(noise=0.0, free_location=False):
     figsize = 1.0    
     U = np.zeros(4)
@@ -142,3 +155,23 @@ def generate_test_set_regression():
     return [X_test, Y_test]
 
 
+
+def generate_dataset_classification(nb_samples, noise=0.0, free_location=False):
+    # Getting im_size:
+    im_size = generate_a_rectangle().shape[0]
+    X = np.zeros([nb_samples,im_size])
+    Y = np.zeros(nb_samples)
+    print('Creating data:')
+    for i in range(nb_samples):
+        if i % 10 == 0:
+            print(i)
+        category = np.random.randint(3)
+        if category == 0:
+            X[i] = generate_a_rectangle(noise, free_location)
+        elif category == 1: 
+            X[i] = generate_a_disk(noise, free_location)
+        else:
+            [X[i], V] = generate_a_triangle(noise, free_location)
+        Y[i] = category
+    X = (X + noise) / (255 + 2 * noise)
+    return [X, Y]
