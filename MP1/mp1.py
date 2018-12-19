@@ -85,19 +85,6 @@ def generate_a_triangle(noise=0.0, free_location=False, pair=False):
     return [imdata, [U[0], V[0], U[1], V[1], U[2], V[2]]]
 
 
-im = generate_a_rectangle(10, True)
-plt.imshow(im.reshape(72,72), cmap='gray')
-plt.show()
-
-im = generate_a_disk(10)
-plt.imshow(im.reshape(72,72), cmap='gray')
-plt.show()
-
-[im, v] = generate_a_triangle(20, False)
-plt.imshow(im.reshape(72,72), cmap='gray')
-plt.show()
-
-
 def generate_dataset_classification(nb_samples, noise=0.0, free_location=False):
     # Getting im_size:
     im_size = generate_a_rectangle().shape[0]
@@ -105,7 +92,7 @@ def generate_dataset_classification(nb_samples, noise=0.0, free_location=False):
     Y = np.zeros(nb_samples)
     print('Creating data:')
     for i in range(nb_samples):
-        if i % 10 == 0:
+        if i % 100 == 0:
             print(i)
         category = np.random.randint(3)
         if category == 0:
@@ -166,7 +153,7 @@ def generate_dataset_classification(nb_samples, noise=0.0, free_location=False):
     Y = np.zeros(nb_samples)
     print('Creating data:')
     for i in range(nb_samples):
-        if i % 10 == 0:
+        if i % 100 == 0:
             print(i)
         category = np.random.randint(3)
         if category == 0:
@@ -187,7 +174,7 @@ def generate_dataset_denoising(nb_samples, noise=0.0, free_location=False):
     Y = np.zeros([nb_samples,im_size])
     print('Creating data:')
     for i in range(nb_samples):
-        if i % 10 == 0:
+        if i % 100 == 0:
             print(i)
         category = np.random.randint(3)
         if category == 0:
