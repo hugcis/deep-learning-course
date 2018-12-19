@@ -24,11 +24,11 @@ def generate_a_drawing_pair(figsize, U, V, noise=0.0):
     ax.fill(U, V, "k")
     fig.canvas.draw()
     imdata = np.frombuffer(fig.canvas.tostring_rgb(), dtype=np.uint8)[::3].astype(np.float32)
-    imdata_noise = imdata + noise * np.random.random(imdata.size)
+    imdata_noisy = imdata + noise * np.random.random(imdata.size)
     plt.close(fig)
-    return imdata, imdata_noise
+    return imdata, imdata_noisy
 
-def generate_a_rectangle(noise=0.0, free_location=False):
+def generate_a_rectangle(noise=0.0, free_location=False, pair=False):
     figsize = 1.0    
     U = np.zeros(4)
     V = np.zeros(4)
@@ -48,10 +48,11 @@ def generate_a_rectangle(noise=0.0, free_location=False):
     U[2] = U[3] = bottom
     V[0] = V[3] = left
     V[1] = V[2] = right
-    return generate_a_drawing(figsize, U, V, noise)
+    return (generate_a_drawing(figsize, U, V, noise) if not pair 
+            else generate_a_drawing_pair(figsize, U, V, noise))
 
 
-def generate_a_disk(noise=0.0, free_location=False):
+def generate_a_disk(noise=0.0, free_location=False, pair=False):
     figsize = 1.0
     if free_location:
         center = np.random.random(2)
@@ -66,9 +67,10 @@ def generate_a_disk(noise=0.0, free_location=False):
         U[i] = center[0] + np.cos(t) * radius
         V[i] = center[1] + np.sin(t) * radius
         i = i + 1
-    return generate_a_drawing(figsize, U, V, noise)
+    return (generate_a_drawing(figsize, U, V, noise) if not pair 
+            else generate_a_drawing_pair(figsize, U, V, noise))
 
-def generate_a_triangle(noise=0.0, free_location=False):
+def generate_a_triangle(noise=0.0, free_location=False, pair=False):
     figsize = 1.0
     if free_location:
         U = np.random.random(3)
@@ -78,7 +80,8 @@ def generate_a_triangle(noise=0.0, free_location=False):
         middle = figsize/2
         U = (middle, middle+size, middle-size)
         V = (middle+size, middle-size, middle-size)
-    imdata = generate_a_drawing(figsize, U, V, noise)
+    imdata = (generate_a_drawing(figsize, U, V, noise) if not pair 
+              else generate_a_drawing_pair(figsize, U, V, noise))
     return [imdata, [U[0], V[0], U[1], V[1], U[2], V[2]]]
 
 
@@ -136,8 +139,9 @@ def generate_dataset_regression(nb_samples, noise=0.0):
 
 import matplotlib.patches as patches
 
-def visualize_prediction(x, y):
-    fig, ax = plt.subplots(figsize=(5, 5))
+def visualize_prediction(x, y, ax=None):
+    if ax is None:
+        fig, ax = plt.subplots(figsize=(5, 5))
     I = x.reshape((72,72))
     ax.imshow(I, extent=[-0.15,1.15,-0.15,1.15],cmap='gray')
     ax.set_xlim([0,1])
@@ -147,7 +151,6 @@ def visualize_prediction(x, y):
     tri = patches.Polygon(xy, closed=True, fill = False, edgecolor = 'r', linewidth = 5, alpha = 0.5)
     ax.add_patch(tri)
 
-    plt.show()
 
 def generate_test_set_regression():
     np.random.seed(42)
@@ -174,4 +177,25 @@ def generate_dataset_classification(nb_samples, noise=0.0, free_location=False):
             [X[i], V] = generate_a_triangle(noise, free_location)
         Y[i] = category
     X = (X + noise) / (255 + 2 * noise)
+    return [X, Y]
+
+
+def generate_dataset_denoising(nb_samples, noise=0.0, free_location=False):
+    # Getting im_size:
+    im_size = generate_a_rectangle().shape[0]
+    X = np.zeros([nb_samples,im_size])
+    Y = np.zeros([nb_samples,im_size])
+    print('Creating data:')
+    for i in range(nb_samples):
+        if i % 10 == 0:
+            print(i)
+        category = np.random.randint(3)
+        if category == 0:
+            Y[i], X[i] = generate_a_rectangle(noise, free_location, pair=True)
+        elif category == 1: 
+            Y[i], X[i] = generate_a_disk(noise, free_location, pair=True)
+        else:
+            [[Y[i], X[i]], _] = generate_a_triangle(noise, free_location, pair=True)
+        X[i] = (X[i] + noise) / (255 + 2 * noise)
+        Y[i] = Y[i] / 255
     return [X, Y]
